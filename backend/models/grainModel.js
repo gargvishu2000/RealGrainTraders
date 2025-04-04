@@ -24,8 +24,6 @@ const grainSchema = new mongoose.Schema({
   unit: {
     type: String,
     required: true,
-    enum: ['kg', 'ton', 'lb','l'],
-    default: 'kg',
     set: v => v.toLowerCase() // Convert to lowercase
   },
   grade: {
