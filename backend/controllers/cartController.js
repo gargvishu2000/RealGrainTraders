@@ -1,6 +1,9 @@
 import userModel from "../models/userModel.js";
 
-// Add Products to user cart
+/**
+ * Add products to user cart
+ * @route POST /api/cart/add
+ */
 export const addToCart = async (req, res) => {
     const { grainId, quantity, price } = req.body;
     const userId = req.body.userId;
@@ -10,6 +13,7 @@ export const addToCart = async (req, res) => {
             return res.status(404).json({ success: false, message: "User not found" });
         }
         let cartData = userData.cartData || { items: [], totalQuantity: 0, totalAmount: 0 };
+        
         // Find if item already exists in cart
         const existingItemIndex = cartData.items.findIndex(
             item => item.grainId.toString() === grainId
@@ -26,6 +30,7 @@ export const addToCart = async (req, res) => {
                 price
             });
         }
+        
         // Update cart totals
         cartData.totalQuantity = cartData.items.reduce((total, item) => total + item.quantity, 0);
         cartData.totalAmount = cartData.items.reduce((total, item) => total + (item.price * item.quantity), 0);
@@ -43,12 +48,15 @@ export const addToCart = async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     }
 }
- 
+
+/**
+ * Update cart item quantity
+ * @route POST /api/cart/update
+ */
 export const updateCart = async (req, res) => {
     try {
         const userId = req.body.userId;
-        const {  grainId, quantity,price } = req.body;
-        console.log(userId);
+        const { grainId, quantity, price } = req.body;
         
         const userData = await userModel.findById(userId);
         if (!userData) {
@@ -60,27 +68,18 @@ export const updateCart = async (req, res) => {
         const itemIndex = cartData.items.findIndex(
             item => item.grainId.toString() === grainId.toString()
         );
-        console.log(itemIndex);
-        
 
         if (itemIndex === -1) {
             return res.status(404).json({ success: false, message: "Item not found in cart" });
         }
 
-        // if (quantity <= 0) {
-        //     // Remove item if quantity is 0 or negative
-        //     cartData.items.splice(itemIndex, 1);
-        // } else {
-        //     // Update quantity
-        //     cartData.items[itemIndex].quantity = quantity;
-        // }
         cartData.items[itemIndex].quantity = parseInt(quantity);
 
         // Recalculate totals
         cartData.totalQuantity = cartData.items.reduce((total, item) => total + item.quantity, 0);
         cartData.totalAmount = cartData.items.reduce((total, item) => total + (item.price * item.quantity), 0);
 
-        const updateUser= await userModel.findByIdAndUpdate(userId, { cartData },{new: true});
+        const updateUser = await userModel.findByIdAndUpdate(userId, { cartData }, { new: true });
 
         res.json({
             success: true,
@@ -93,6 +92,10 @@ export const updateCart = async (req, res) => {
     }
 }
 
+/**
+ * Get user's cart
+ * @route GET /api/cart/get
+ */
 export const getUserCart = async (req, res) => {
     try {
         const userId = req.body.userId;
@@ -103,7 +106,7 @@ export const getUserCart = async (req, res) => {
 
         res.json({
             success: true,
-            cartData: userData.cartData
+            cartData: userData.cartData || { items: [], totalQuantity: 0, totalAmount: 0 }
         });
     } catch (error) {
         console.log(error);
@@ -111,13 +114,16 @@ export const getUserCart = async (req, res) => {
     }
 }
 
-// Add a new function to remove items from cart
+/**
+ * Remove item from cart
+ * @route DELETE /api/cart/remove
+ */
 export const removeFromCart = async (req, res) => {
     try {
         const userId = req.body.userId;
         const { grainId } = req.body;
+        
         if (!userId || !grainId) {
-            console.log("Missing required fields:", { userId, grainId });
             return res.status(400).json({ success: false, message: "Missing required fields" });
         }
         
@@ -126,7 +132,7 @@ export const removeFromCart = async (req, res) => {
             return res.status(404).json({ success: false, message: "User not found" });
         }
 
-        let cartData = userData.cartData;
+        let cartData = userData.cartData || { items: [], totalQuantity: 0, totalAmount: 0 };
         const itemIndex = cartData.items.findIndex(
             item => item.grainId.toString() === grainId.toString()
         );
@@ -142,7 +148,7 @@ export const removeFromCart = async (req, res) => {
         cartData.totalQuantity = cartData.items.reduce((total, item) => total + item.quantity, 0);
         cartData.totalAmount = cartData.items.reduce((total, item) => total + (item.price * item.quantity), 0);
 
-        const updateData= await userModel.findByIdAndUpdate(userId, { cartData });
+        const updateData = await userModel.findByIdAndUpdate(userId, { cartData }, { new: true });
 
         res.json({
             success: true,
@@ -155,10 +161,14 @@ export const removeFromCart = async (req, res) => {
     }
 }
 
-// Add a function to clear the entire cart
+/**
+ * Clear entire cart
+ * @route DELETE /api/cart/clear
+ */
 export const clearCart = async (req, res) => {
     try {
         const { userId } = req.body;
+        
         const userData = await userModel.findById(userId);
         if (!userData) {
             return res.status(404).json({ success: false, message: "User not found" });
@@ -171,12 +181,12 @@ export const clearCart = async (req, res) => {
             totalAmount: 0
         };
 
-        await userModel.findByIdAndUpdate(userId, { cartData });
+        const updatedUser = await userModel.findByIdAndUpdate(userId, { cartData }, { new: true });
 
         res.json({
             success: true,
             message: "Cart cleared",
-            cartData
+            cartData: updatedUser.cartData
         });
     } catch (error) {
         console.log(error);

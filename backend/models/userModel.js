@@ -26,7 +26,6 @@ const userSchema = new mongoose.Schema({
             },
             quantity: Number,
             price: Number
-            // any other item-specific fields you need
         }],
         totalQuantity: {
             type: Number,
@@ -45,15 +44,20 @@ const userSchema = new mongoose.Schema({
         enum: ['admin', 'user'],
         default: 'user',
     },
-    createdAt: {
-        type: Date,
-        default: Date.now,
-    },
-    updatedAt: {
-        type: Date,
-        default: Date.now,
-    },
-})
+    resetPasswordToken: String,
+    resetPasswordExpire: Date,
+    orders: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'order'
+    }]
+}, {
+    timestamps: true,
+    versionKey: false
+});
+
+// Add index for better search performance
+userSchema.index({ email: 1 });
+userSchema.index({ role: 1 });
 
 const userModel = mongoose.model('User', userSchema);
 export default userModel;
