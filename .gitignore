@@ -3,12 +3,14 @@ node_modules/
 /.pnp
 .pnp.js
 
-# Environment variables
+# Environment variables - cover all locations
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+**/.env
+.env.*
+**/.env.*
+frontend/.env
+backend/.env
+admin/.env
 
 # Build files
 /build
